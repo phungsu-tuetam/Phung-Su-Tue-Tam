@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý thành viên</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .card {
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center">Quản lý thành viên</h2>
+
+        <!-- Phần tìm kiếm theo ID hoặc họ tên -->
+        <div class="form-group">
+            <label for="searchQuery">Tìm kiếm thành viên bằng Họ tên hoặc ID:</label>
+            <input type="text" class="form-control" id="searchQuery" placeholder="Nhập Họ tên hoặc ID thành viên">
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h4>Thêm hoặc chỉnh sửa thành viên</h4>
+                <form id="memberForm">
+                    <div class="form-group">
+                        <label for="memberId">ID thành viên</label>
+                        <input type="text" class="form-control" id="memberId" placeholder="Nhập ID thành viên">
+                    </div>
+                    <div class="form-group">
+                        <label for="fullname">Họ và tên</label>
+                        <input type="text" class="form-control" id="fullname" placeholder="Nhập họ và tên">
+                    </div>
+                    <div class="form-group">
+                        <label for="religion">Pháp danh</label>
+                        <input type="text" class="form-control" id="religion" placeholder="Nhập pháp danh">
+                    </div>
+                    <div class="form-group">
+                        <label for="birthdate">Ngày sinh</label>
+                        <input type="date" class="form-control" id="birthdate">
+                    </div>
+                    <div class="form-group">
+                        <label for="points">Điểm</label>
+                        <input type="number" class="form-control" id="points" placeholder="Nhập điểm">
+                    </div>
+                    <div class="form-group">
+                        <label for="fund">Quỹ đóng tới tháng</label>
+                        <input type="month" class="form-control" id="fund">
+                    </div>
+                    <input type="hidden" id="memberIndex"> <!-- Ẩn trường để lưu vị trí -->
+                    <button type="submit" class="btn btn-success">Lưu thành viên</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h4>Danh sách thành viên</h4>
+                <ul id="memberList" class="list-group">
+                    <!-- Danh sách thành viên sẽ hiển thị tại đây -->
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h4>Xóa tất cả thành viên</h4>
+                <button id="deleteAllMembers" class="btn btn-danger">Xóa tất cả thành viên</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lấy dữ liệu từ LocalStorage hoặc khởi tạo mảng trống
+        let members = JSON.parse(localStorage.getItem('members')) || [];
+
+        // Hiển thị danh sách thành viên
+        function displayMembers(membersToDisplay = members) {
+            const memberList = document.getElementById('memberList');
+            memberList.innerHTML = ''; // Xóa danh sách cũ
+
+            if (membersToDisplay.length > 0) {
+                membersToDisplay.forEach((member, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.innerHTML = `
+                        <span>ID: ${member.id} - ${member.fullname} - ${formatDate(member.birthdate)}</span>
+                        <div>
+                            <button class="btn btn-primary btn-sm mr-2" onclick="editMember(${index})">Sửa</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteMember(${index})">Xóa</button>
+                        </div>
+                    `;
+                    memberList.appendChild(li);
+                });
+            } else {
+                memberList.innerHTML = '<li class="list-group-item text-center">Không tìm thấy thành viên</li>';
+            }
+        }
+
+        // Định dạng ngày theo dạng DD/MM/YYYY
+        function formatDate(date) {
+            let d = new Date(date);
+            let day = String(d.getDate()).padStart(2, '0');
+            let month = String(d.getMonth() + 1).padStart(2, '0');
+            let year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Lưu thông tin thành viên vào LocalStorage
+        document.getElementById('memberForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Lấy thông tin từ form
+            let member = {
+                id: document.getElementById('memberId').value, // Admin tự đặt ID
+                fullname: document.getElementById('fullname').value,
+                religion: document.getElementById('religion').value,
+                birthdate: document.getElementById('birthdate').value,
+                points: document.getElementById('points').value,
+                fund: document.getElementById('fund').value
+            };
+
+            const memberIndex = document.getElementById('memberIndex').value;
+
+            if (memberIndex === '') {
+                // Thêm thành viên mới vào mảng
+                members.push(member);
+            } else {
+                // Chỉnh sửa thành viên đã tồn tại
+                members[memberIndex] = member;
+            }
+
+            // Lưu mảng thành viên vào LocalStorage
+            localStorage.setItem('members', JSON.stringify(members));
+            alert('Thông tin thành viên đã được lưu!');
+
+            // Xóa form và cập nhật danh sách
+            document.getElementById('memberForm').reset();
+            document.getElementById('memberIndex').value = '';
+            displayMembers();
+        });
+
+        // Chỉnh sửa thành viên
+        function editMember(index) {
+            const member = members[index];
+
+            // Điền thông tin thành viên vào form
+            document.getElementById('memberId').value = member.id; // ID do admin nhập
+            document.getElementById('fullname').value = member.fullname;
+            document.getElementById('religion').value = member.religion;
+            document.getElementById('birthdate').value = member.birthdate;
+            document.getElementById('points').value = member.points;
+            document.getElementById('fund').value = member.fund;
+            document.getElementById('memberIndex').value = index; // Lưu vị trí thành viên để chỉnh sửa
+        }
+
+        // Xóa thành viên
+        function deleteMember(index) {
+            if (confirm('Bạn có chắc chắn muốn xóa thành viên này?')) {
+                members.splice(index, 1);
+                localStorage.setItem('members', JSON.stringify(members));
+                displayMembers();
+            }
+        }
+
+        // Xóa tất cả thành viên khỏi LocalStorage
+        document.getElementById('deleteAllMembers').addEventListener('click', function() {
+            if (confirm('Bạn có chắc chắn muốn xóa tất cả thành viên?')) {
+                localStorage.removeItem('members');
+                members = [];
+                displayMembers();
+                alert('Tất cả thành viên đã được xóa!');
+            }
+        });
+
+        // Tìm kiếm thành viên theo ID hoặc họ và tên
+        document.getElementById('searchQuery').addEventListener('input', function() {
+            const searchQuery = this.value.trim().toLowerCase();
+            const filteredMembers = members.filter(member =>
+                member.id.toLowerCase().includes(searchQuery) ||
+                member.fullname.toLowerCase().includes(searchQuery)
+            );
+
+            displayMembers(filteredMembers);
+        });
+
+        // Hiển thị danh sách thành viên khi tải trang
+        window.onload = displayMembers;
+    </script>
+</body>
+</html>

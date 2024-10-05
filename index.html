@@ -3,86 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý thành viên</title>
-
-    <!-- Import Firebase SDK -->
-    <script type="module">
-        // Import các chức năng từ Firebase SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
-
-        // Cấu hình Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyAC0hynXxd4Fu-HqEv5yNF_PdGd9Qf8bkU",
-            authDomain: "phung-su-tue-tam-7547d.firebaseapp.com",
-            projectId: "phung-su-tue-tam-7547d",
-            storageBucket: "phung-su-tue-tam-7547d.appspot.com",
-            messagingSenderId: "498429021285",
-            appId: "1:498429021285:web:acc8715b4e7facaac24a8c",
-        };
-
-        // Khởi tạo Firebase và Firestore
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Hàm thêm thành viên vào Firestore
-        async function addMember(member) {
-            try {
-                const docRef = await addDoc(collection(db, "members"), member);
-                console.log("Thành viên được thêm với ID: ", docRef.id);
-            } catch (e) {
-                console.error("Lỗi khi thêm thành viên: ", e);
-            }
+    <title>Thông tin thành viên</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f0f8ff;
         }
-
-        // Hàm lấy danh sách thành viên từ Firestore
-        async function getMembers() {
-            const querySnapshot = await getDocs(collection(db, "members"));
-            querySnapshot.forEach((doc) => {
-                console.log(`${doc.id} => ${doc.data().fullname}`);
-                const memberList = document.getElementById('memberList');
-                memberList.innerHTML += `<li>ID: ${doc.data().id}, Họ và tên: ${doc.data().fullname}</li>`;
-            });
+        .container {
+            margin-top: 50px;
         }
-
-        // Gọi hàm getMembers khi tải trang
-        window.onload = function() {
-            getMembers();
-        };
-    </script>
+        .card {
+            margin: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .card-body {
+            background-color: #fff;
+            border-radius: 15px;
+            padding: 30px;
+        }
+        .background {
+            border-radius: 15px;
+            background-color: #ccffcc; /* Màu xanh lá nhạt */
+            padding: 30px;
+            color: black;
+            font-weight: bold;
+        }
+        h4, p {
+            margin: 10px 0;
+            color: black; /* Chữ màu đen bóng */
+        }
+        .form-control {
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h2>Thông tin thành viên</h2>
-
-        <!-- Form nhập thông tin thành viên -->
-        <form id="memberForm">
-            <label for="memberId">ID thành viên</label>
-            <input type="text" id="memberId" placeholder="Nhập ID thành viên">
-            <br>
-            <label for="fullname">Họ và tên</label>
-            <input type="text" id="fullname" placeholder="Nhập họ và tên">
-            <br>
-            <button type="submit">Lưu thành viên</button>
-        </form>
-
-        <h3>Danh sách thành viên</h3>
-        <ul id="memberList"></ul>
+        <h2 class="text-center">Tìm kiếm thông tin thành viên</h2>
+        <div class="form-group">
+            <label for="search">Nhập ID thành viên:</label>
+            <input type="text" class="form-control" id="search" placeholder="Nhập chính xác ID để tìm kiếm">
+        </div>
+        <div id="member-info" class="card">
+            <div class="card-body">
+                <!-- Thông tin thành viên sẽ hiển thị ở đây -->
+                <p class="text-center">Vui lòng nhập ID thành viên để tìm kiếm.</p>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Xử lý sự kiện submit form để lưu thành viên
-        document.getElementById('memberForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const member = {
-                id: document.getElementById('memberId').value,
-                fullname: document.getElementById('fullname').value,
-            };
-            addMember(member);  // Gọi hàm để lưu vào Firestore
+        // Lấy dữ liệu thành viên từ LocalStorage
+        let members = JSON.parse(localStorage.getItem('members')) || [];
 
-            // Reset form sau khi lưu
-            document.getElementById('memberForm').reset();
+        // Hàm hiển thị thông tin thành viên khi tìm kiếm thành công
+        function displayMember(member) {
+            const memberInfoDiv = document.querySelector("#member-info .card-body");
+
+            // Hiển thị thông tin thành viên với nền xanh lá nhạt và chữ màu đen bóng
+            memberInfoDiv.innerHTML = `
+                <div class="background">
+                    <h4>ID: ${member.id}</h4>
+                    <p>Họ và tên: ${member.fullname}</p>
+                    <p>Pháp danh: ${member.religion}</p>
+                    <p>Ngày sinh: ${formatDate(member.birthdate)}</p>
+                    <p>Điểm: ${member.points}</p>
+                    <p>Quỹ đóng tới tháng: ${formatMonthYear(member.fund)}</p>
+                </div>
+            `;
+        }
+
+        // Định dạng ngày theo dạng DD/MM/YYYY
+        function formatDate(date) {
+            let d = new Date(date);
+            let day = String(d.getDate()).padStart(2, '0');
+            let month = String(d.getMonth() + 1).padStart(2, '0');
+            let year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Chỉ hiển thị tháng và năm cho phần quỹ đóng
+        function formatMonthYear(date) {
+            let d = new Date(date);
+            let month = String(d.getMonth() + 1).padStart(2, '0');
+            let year = d.getFullYear();
+            return `${month}/${year}`;
+        }
+
+        // Tìm kiếm thành viên theo ID
+        document.getElementById('search').addEventListener('input', function() {
+            const searchQuery = this.value.trim();
+
+            // Chỉ hiển thị khi nhập đúng ID hoàn toàn
+            const foundMember = members.find(member => member.id === searchQuery);
+
+            if (foundMember) {
+                displayMember(foundMember);
+            } else if (searchQuery === "") {
+                document.querySelector("#member-info .card-body").innerHTML = '<p class="text-center">Vui lòng nhập ID thành viên để tìm kiếm.</p>';
+            } else {
+                document.querySelector("#member-info .card-body").innerHTML = '<p class="text-center">Không tìm thấy thành viên với ID này.</p>';
+            }
         });
+
+        // Khi tải trang, hiển thị thông báo yêu cầu nhập ID
+        document.querySelector("#member-info .card-body").innerHTML = '<p class="text-center">Vui lòng nhập ID thành viên để tìm kiếm.</p>';
     </script>
 </body>
 </html>

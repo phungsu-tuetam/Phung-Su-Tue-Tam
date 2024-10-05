@@ -24,38 +24,39 @@
         }
         .background {
             border-radius: 15px;
-            background-color: #ccffcc; /* Màu xanh lá nhạt */
+            background-color: #ccffcc;
             padding: 30px;
             color: black;
             font-weight: bold;
         }
         h4, p {
             margin: 10px 0;
-            color: black; /* Chữ màu đen bóng */
+            color: black;
         }
         .form-control {
             margin-bottom: 20px;
         }
     </style>
-</head>
-<body>
-    <div class="container">
-        <h2 class="text-center">Tìm kiếm thông tin thành viên</h2>
-        <div class="form-group">
-            <label for="search">Nhập ID thành viên:</label>
-            <input type="text" class="form-control" id="search" placeholder="Nhập chính xác ID để tìm kiếm">
-        </div>
-        <div id="member-info" class="card">
-            <div class="card-body">
-                <!-- Thông tin thành viên sẽ hiển thị ở đây -->
-                <p class="text-center">Vui lòng nhập ID thành viên để tìm kiếm.</p>
-            </div>
-        </div>
-    </div>
 
-    <script>
-        // Lấy dữ liệu thành viên từ LocalStorage
-        let members = JSON.parse(localStorage.getItem('members')) || [];
+    <!-- Import Firebase SDK -->
+    <script type="module">
+        // Import các chức năng Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+
+        // Cấu hình Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAC0hynXxd4Fu-HqEv5yNF_PdGd9Qf8bkU",
+            authDomain: "phung-su-tue-tam-7547d.firebaseapp.com",
+            projectId: "phung-su-tue-tam",
+            storageBucket: "phung-su-tue-tam-7547d.appspot.com",
+            messagingSenderId: "498429021285",
+            appId: "1:498429021285:web:acc8715b4e7facaac24a8c",
+        };
+
+        // Khởi tạo Firebase và Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         // Hàm hiển thị thông tin thành viên khi tìm kiếm thành công
         function displayMember(member) {
@@ -91,24 +92,50 @@
             return `${month}/${year}`;
         }
 
-        // Tìm kiếm thành viên theo ID
-        document.getElementById('search').addEventListener('input', function() {
-            const searchQuery = this.value.trim();
+        // Tìm kiếm thành viên theo ID từ Firestore
+        async function searchMemberById(memberId) {
+            const membersCollection = collection(db, "members");
+            const q = query(membersCollection, where("id", "==", memberId));
+            const querySnapshot = await getDocs(q);
 
-            // Chỉ hiển thị khi nhập đúng ID hoàn toàn
-            const foundMember = members.find(member => member.id === searchQuery);
-
-            if (foundMember) {
-                displayMember(foundMember);
-            } else if (searchQuery === "") {
-                document.querySelector("#member-info .card-body").innerHTML = '<p class="text-center">Vui lòng nhập ID thành viên để tìm kiếm.</p>';
+            if (!querySnapshot.empty) {
+                const memberDoc = querySnapshot.docs[0];
+                const memberData = memberDoc.data();
+                displayMember(memberData);
             } else {
                 document.querySelector("#member-info .card-body").innerHTML = '<p class="text-center">Không tìm thấy thành viên với ID này.</p>';
+            }
+        }
+
+        // Tìm kiếm thành viên khi người dùng nhập ID
+        document.getElementById('search').addEventListener('input', function() {
+            const searchQuery = this.value.trim();
+            if (searchQuery) {
+                searchMemberById(searchQuery);
+            } else {
+                document.querySelector("#member-info .card-body").innerHTML = '<p class="text-center">Vui lòng nhập ID thành viên để tìm kiếm.</p>';
             }
         });
 
         // Khi tải trang, hiển thị thông báo yêu cầu nhập ID
-        document.querySelector("#member-info .card-body").innerHTML = '<p class="text-center">Vui lòng nhập ID thành viên để tìm kiếm.</p>';
+        window.onload = function() {
+            document.querySelector("#member-info .card-body").innerHTML = '<p class="text-center">Vui lòng nhập ID thành viên để tìm kiếm.</p>';
+        };
     </script>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center">Tìm kiếm thông tin thành viên</h2>
+        <div class="form-group">
+            <label for="search">Nhập ID thành viên:</label>
+            <input type="text" class="form-control" id="search" placeholder="Nhập chính xác ID để tìm kiếm">
+        </div>
+        <div id="member-info" class="card">
+            <div class="card-body">
+                <!-- Thông tin thành viên sẽ hiển thị ở đây -->
+                <p class="text-center">Vui lòng nhập ID thành viên để tìm kiếm.</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
